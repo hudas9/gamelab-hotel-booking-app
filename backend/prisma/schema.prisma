@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String    @db.VarChar(100)
+  email         String    @unique
+  password      String    @db.VarChar(100)
+  role          Role      @default(USER)
+  creation_time DateTime  @default(now())
+  update_time   DateTime  @default(now())
+  reviews       Review[]  @relation("UserReviews")
+
+  @@map("tbl_users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Hotel {
+  id           String      @id @default(uuid())
+  name         String      @unique
+  place        String
+  address      String
+  offer        String
+  roomDetails  String
+  bedDetails   String
+  roomLeft     Int
+  rating       Float
+  reviewsCount Int         @default(0)
+  night        Int
+  adult        Int
+  children     Int
+  price        Int
+  images       HotelImage[]
+  bookings     Booking[]
+  reviews      Review[]    @relation("HotelReviews")
+
+  @@map("tbl_hotels")
+}
+
+model HotelImage {
+  id       Int    @id @default(autoincrement())
+  imgUrl   String
+  hotelId  String
+  hotel    Hotel  @relation(fields: [hotelId], references: [id])
+
+  @@index([hotelId])
+  @@map("tbl_hotel_images")
+}
+
+model FeaturedCities {
+  id          Int    @id @default(autoincrement())
+  img         String
+  name        String
+  countryImg  String
+  desc        String
+  rating      Int
+  hotels      Int
+
+  @@map("tbl_featured_cities")
+}
+
+model Booking {
+  id            String      @id @default(uuid())
+  name          String
+  hotelId       String
+  userId        String
+  startDate     DateTime
+  endDate       DateTime
+  guests        Int
+  totalPrice    Int
+  checkInAt     DateTime?
+  checkOutAt    DateTime?
+  paymentLink   String?
+  isPaid        Boolean     @default(false)
+  creation_time DateTime    @default(now())
+  update_time   DateTime    @updatedAt
+  hotel         Hotel       @relation(fields: [hotelId], references: [id])
+  reviews       Review[]    @relation("BookingReviews")
+
+  @@map("tbl_bookings")
+}
+
+model Review {
+  id        String    @id @default(uuid())
+  userId    String
+  hotelId   String
+  bookingId String
+  name      String
+  rating    Int       @db.TinyInt
+  comment   String    @db.Text
+  user      User      @relation("UserReviews", fields: [userId], references: [id])
+  hotel     Hotel?    @relation("HotelReviews", fields: [hotelId], references: [id])
+  booking   Booking?  @relation("BookingReviews", fields: [bookingId], references: [id])
+
+  @@map("tbl_reviews")
+}
